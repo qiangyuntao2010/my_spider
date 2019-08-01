@@ -21,8 +21,10 @@ class Spider:
         if is_proxy == True:#如果请求要使用代理则拉取代理
             
             self.get_proxy()
-        self.proxy = False   #指定是否使用代理
 
+        self.proxy = is_proxy   #指定是否使用代理
+
+# This is my header and maybe you should use your browser header
         self.headers={'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'}    
     
     def get_proxy(self):
@@ -98,33 +100,28 @@ class Spider:
                     r.encoding = r.apparent_encoding
                     return r.text
 
-    def get_info(self, url, **regexs):
-        info = {}
+    def get_info(self, url, title):
+
         html = self.get_html(url)
-        for key, regex in regexs.items():
-            info[key] = re.findall(regex, html)
+        info=re.findall(title,url)
         return info
 
 if __name__ == '__main__':  
     
     
-    url = 'https://www.x23us.com/class/1_101.html'
+    url = 'https://www.8btc.com/article/449153'
       
 
-    book_name_url_regex = '\[简介\]</a><a href="(.*?)" target="_blank">(.*?)</a></td>'
-
-    author_regex = '</a></td>\s+?<td class="C">(.*?)</td>'
+   # book_name_url_regex = '\[Libra\]</a><a href="(.*?)" target="_blank">(.*?)</a></td>'
+    title='<title data-vue-meta="true">(.*?)Libra(.*?)</title>'
+   # author_regex = '</a></td>\s+?<td class="C">(.*?)</td>'
 
     x = Spider(False)
-    print("TEST:"+str(sys._getframe().f_lineno))
+    #print("TEST:"+str(sys._getframe().f_lineno))
+
+    info = x.get_info(url,title)
     
-    info = x.get_info(
-        url,
-        book_name_url = book_name_url_regex,
-        author = author_regex,
-        )
-    
-#    print(info)
+    print(info)
 
     
         
