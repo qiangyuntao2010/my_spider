@@ -1,16 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
-Created on Sun Jun 30 23:23:14 2019
-
-author: 一文 --最远的你们是我最近的爱
-'''
 
 import re
 import sys
 import requests
-
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from proxy_api import get_proxies
 
 class Spider:
@@ -18,19 +13,19 @@ class Spider:
        
     def __init__(self, is_proxy = False):
         
-        if is_proxy == True:#如果请求要使用代理则拉取代理
+        #If you want to use proxy
+        if is_proxy == True:
             
             self.get_proxy()
 
-        self.proxy = is_proxy   #指定是否使用代理
+        self.proxy = is_proxy   
 
-# This is my header and maybe you should use your browser header
+        # This is my header and maybe you should use your browser header
         self.headers={'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'}    
     
     def get_proxy(self):
         
         '''
-        
         调用get_proxies()方法
         
         一个面象管道提取代理的方法，详细介绍见proxy_api.py
@@ -43,10 +38,6 @@ class Spider:
         
         
         供requests发起请求时传给proxies参数
-        
-        
-        
-        
         '''
         proxy_dict = get_proxies()
             
@@ -77,51 +68,56 @@ class Spider:
         
         if self.proxy == False:
             r = requests.get(url, headers = self.headers, verify = False)
-            r.raise_for_status()
+            #r.raise_for_status()
+
 #如果发送了一个错误请求(一个 4XX 客户端错误，或者 5XX 服务器错误响应)，我们可以通过 Response.raise_for_status() 来抛出异常
             r.encoding = r.apparent_encoding
-            print (str(sys._getframe().f_lineno)+"TEST:"+r.text)
+            #print (str(sys._getframe().f_lineno)+"TEST:")
             return r.text
         else:
             for i in range(4):
 #连续拉取代理3次，代理不能用报错
                 try:
-                    r = requests.get(url, headers = self.headers, verify = False)
+                    r = requests.get(url, headers = self.headers, verify = False, timeout=30)
                     r.raise_for_status()
-#如果发送了一个错误请求(一个 4XX 客户端错误，或者 5XX 服务器错误响应)，我们可以通过 Response.raise_for_status() 来抛出异常
                 except requests.exceptions.ProxyError:
-                    if i == 3:
-                        raise  
-#连续拉取代理3次，代理不能用报错
-                    print('Proxy falsed, please try again')
-                    self.get_proxy()
+                        pass
+                        print('Proxy falsed, please try again')
+                        self.get_proxy()
 #return 'ProxyError'
                 else:
                     r.encoding = r.apparent_encoding
+                    print("Open the websit successfully!")
                     return r.text
 
     def get_info(self, url, title):
 
         html = self.get_html(url)
-        info=re.findall(title,url)
-        return info
+        pattern=re.compile(title)
+        title_i=str(title)
+
+        if title_i in html:
+            return url
+        else:
+            url=None
+            
 
 if __name__ == '__main__':  
     
-    
-    url = 'https://www.8btc.com/article/449153'
-      
-
-   # book_name_url_regex = '\[Libra\]</a><a href="(.*?)" target="_blank">(.*?)</a></td>'
-    title='<title data-vue-meta="true">(.*?)Libra(.*?)</title>'
-   # author_regex = '</a></td>\s+?<td class="C">(.*?)</td>'
-
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning) 
     x = Spider(False)
-    #print("TEST:"+str(sys._getframe().f_lineno))
+    url_base = 'https://www.8btc.com/article/45742'
+    title_test='Libra'
+    for count in range(500):
+        url=url_base+str(count)
+        print count
+        result=x.get_info(url,title_test)
+        if result is None:
+            pass
+        else:
+            print result
 
-    info = x.get_info(url,title)
     
-    print(info)
 
     
         
