@@ -68,6 +68,10 @@ class Spider:
         
         if self.proxy == False:
             r = requests.get(url, headers = self.headers, verify = False)
+            if r.status_code==200:
+                pass
+            else:
+                return None
             #r.raise_for_status()
 
 #如果发送了一个错误请求(一个 4XX 客户端错误，或者 5XX 服务器错误响应)，我们可以通过 Response.raise_for_status() 来抛出异常
@@ -93,24 +97,25 @@ class Spider:
     def get_info(self, url, title):
 
         html = self.get_html(url)
-        pattern=re.compile(title)
-        title_i=str(title)
 
-        if title_i in html:
+        if html==None:
+            return None
+
+        pattern=re.compile(title)
+        m=pattern.findall(html)
+        if m:
             return url
         else:
-            url=None
-            
+            return None 
 
 if __name__ == '__main__':  
     
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning) 
     x = Spider(False)
-    url_base = 'https://www.8btc.com/article/45742'
-    title_test='Libra'
-    for count in range(500):
+    url_base = 'https://www.8btc.com/article/'
+    title_test=r'<title data-vue-meta="true">(.*?)Libra(.*?)</title>'
+    for count in range(450000,465000):
         url=url_base+str(count)
-        print count
         result=x.get_info(url,title_test)
         if result is None:
             pass
