@@ -114,7 +114,7 @@ if __name__ == '__main__':
     x = Spider(False)
     url_base = 'https://www.8btc.com/article/'
     title_test=r'<title data-vue-meta="true">(.*?)Libra(.*?)</title>'
-    for count in range(450000,465000):
+    for count in range(455827,465000):
         url=url_base+str(count)
         result=x.get_info(url,title_test)
         if result is None:
