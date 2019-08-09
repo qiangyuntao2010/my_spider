@@ -2,15 +2,16 @@
 # -*- coding: utf-8 -*-
 
 '''
-Created on Sun Jun 30 23:23:14 2019
 
-author: 一文 --最远的你们是我最近的爱
+Written by QYT, please contact me by qiangyutao2010@gmail.com
+Copyright 2019 QYT
+
 '''
 
 import re
 import sys
 import requests
-
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from proxy_api import get_proxies
 
 class Spider:
@@ -18,34 +19,29 @@ class Spider:
        
     def __init__(self, is_proxy = False):
         
-        if is_proxy == True:#如果请求要使用代理则拉取代理
+        #If you want to use proxy
+        if is_proxy == True:
             
             self.get_proxy()
-        self.proxy = False   #指定是否使用代理
 
+        self.proxy = is_proxy   
+
+        # This is my header and maybe you should use your browser header
         self.headers={'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'}    
     
     def get_proxy(self):
-        
         '''
-        
-        调用get_proxies()方法
-        
-        一个面象管道提取代理的方法，详细介绍见proxy_api.py
-        
-        将get_proxies()方法调取的代理处理成供requests发起请求时传给proxies参数的形式
+
+        Invoke get_proxy() method.
+        Detail please see proxy_api.py
         
         return:  {'http': 'http://223.240.211.23:28500', 
-        
                   'https': 'http://223.240.211.23:28500'}
         
-        
-        供requests发起请求时传给proxies参数
-        
-        
-        
-        
-        '''
+        Give the paras to proxy
+
+
+        '''        
         proxy_dict = get_proxies()
             
         proxy_ip = proxy_dict['ip']
@@ -62,69 +58,74 @@ class Spider:
         
         return self.proxies
         
-        
+        '''
+
+        invoke request to web page and return the source code
+
+        ''' 
     
-    """
-    向网页发起请求，并反回网页源代码
-        
-    url : 要访问的链接
-            
-    return: 网页源代码
-    """
     def get_html(self, url):
         
         if self.proxy == False:
             r = requests.get(url, headers = self.headers, verify = False)
-            r.raise_for_status()
-#如果发送了一个错误请求(一个 4XX 客户端错误，或者 5XX 服务器错误响应)，我们可以通过 Response.raise_for_status() 来抛出异常
+            if r.status_code==200:
+                pass
+            else:
+                return None
+            #r.raise_for_status()
+
+#If you send an error request and get the 4XX or 5XX error respone, we can use respone.raise_for_status to throw the exception 
+            
             r.encoding = r.apparent_encoding
-            print (str(sys._getframe().f_lineno)+"TEST:"+r.text)
+
             return r.text
         else:
             for i in range(4):
-#连续拉取代理3次，代理不能用报错
+
+# Pull the proxy three times and no error is allowed
+                
                 try:
-                    r = requests.get(url, headers = self.headers, verify = False)
+                    r = requests.get(url, headers = self.headers, verify = False, timeout=30)
                     r.raise_for_status()
-#如果发送了一个错误请求(一个 4XX 客户端错误，或者 5XX 服务器错误响应)，我们可以通过 Response.raise_for_status() 来抛出异常
                 except requests.exceptions.ProxyError:
-                    if i == 3:
-                        raise  
-#连续拉取代理3次，代理不能用报错
-                    print('Proxy falsed, please try again')
-                    self.get_proxy()
-#return 'ProxyError'
+                        pass
+                        print('Proxy falsed, please try again')
+                        self.get_proxy()
+                        return 'ProxyError'
                 else:
                     r.encoding = r.apparent_encoding
+                    print("Open the websit successfully!")
                     return r.text
 
-    def get_info(self, url, **regexs):
-        info = {}
+    def get_info(self, url, title):
+
         html = self.get_html(url)
-        for key, regex in regexs.items():
-            info[key] = re.findall(regex, html)
-        return info
+
+        if html==None:
+            return None
+
+        pattern=re.compile(title)
+        m=pattern.findall(html)
+        if m:
+            return url
+        else:
+            return None 
 
 if __name__ == '__main__':  
     
-    
-    url = 'https://www.x23us.com/class/1_101.html'
-      
-
-    book_name_url_regex = '\[简介\]</a><a href="(.*?)" target="_blank">(.*?)</a></td>'
-
-    author_regex = '</a></td>\s+?<td class="C">(.*?)</td>'
-
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning) 
     x = Spider(False)
-    print("TEST:"+str(sys._getframe().f_lineno))
+    url_base = 'https://www.8btc.com/article/'
+    title_test=r'<title data-vue-meta="true">(.*?)Libra(.*?)</title>'
+    for count in range(460781,465000):
+        url=url_base+str(count)
+        result=x.get_info(url,title_test)
+        if result is None:
+            pass
+        else:
+            print result
+
     
-    info = x.get_info(
-        url,
-        book_name_url = book_name_url_regex,
-        author = author_regex,
-        )
-    
-#    print(info)
 
     
         
